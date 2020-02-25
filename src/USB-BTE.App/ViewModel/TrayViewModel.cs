@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using USB_BTE.App.EventArgs;
 using USB_BTE.App.Properties;
 using ContextMenu = System.Windows.Forms.ContextMenu;
 using MenuItem = System.Windows.Forms.MenuItem;
@@ -10,8 +12,9 @@ namespace USB_BTE.App.ViewModel
     public class TrayViewModel
     {
         private readonly NotifyIcon _notifyIcon;
-        private bool _enabled;
-        private Icon Icon => _enabled ? Resources.ball_grey : Resources.ball_green;
+        
+        public event EventHandler OnDoubleClick;
+        public event EventHandler<MenuItemClickEventArgs> OnMenuItemClick;
 
         /// <summary>
         ///     Initialize the instance.
@@ -20,33 +23,43 @@ namespace USB_BTE.App.ViewModel
         {
             _notifyIcon = new NotifyIcon
             {
-                Icon = Icon,
-                Text = "Tray test", Visible = true
+                Text = @"USB-BTE",
+                Visible = true,
+                ContextMenu = new ContextMenu()
             };
-
             _notifyIcon.DoubleClick += Ni_DoubleClick;
-
-            /* menu */
-            var mMenu = new ContextMenu();
-            mMenu.MenuItems.Add(0, new MenuItem("Open", new System.EventHandler(TrayOpen_Click)));
-            mMenu.MenuItems.Add(1, new MenuItem("Close", new System.EventHandler(TrayExit_Click)));
-            _notifyIcon.ContextMenu = mMenu;
         }
 
-        private void TrayOpen_Click(object sender, EventArgs e)
+        public void SetMenuItems(IEnumerable<TrayMenuItemViewModel> items)
         {
-
+            _notifyIcon.ContextMenu.MenuItems.Clear();
+            foreach (var item in items)
+            {
+                var menuItem = new MenuItem()
+                {
+                    Text = item.Text,
+                    
+                };
+                menuItem.Click += (sender, args) =>
+                {
+                    OnMenuItemClick?.Invoke(sender, new MenuItemClickEventArgs()
+                    {
+                        Id = item.Id
+                    });
+                };
+                _notifyIcon.ContextMenu.MenuItems.Add(menuItem);
+            }
         }
 
-        private void TrayExit_Click(object sender, EventArgs e)
-        {
 
+        public void SetIcon(Icon icon)
+        {
+            _notifyIcon.Icon = icon;
         }
-
-        private void Ni_DoubleClick(object sender, EventArgs e)
+        
+        private void Ni_DoubleClick(object sender, System.EventArgs e)
         {
-            _enabled = !_enabled;
-            _notifyIcon.Icon = Icon;
+            OnDoubleClick?.Invoke(sender, e);
         }
     }
 }
