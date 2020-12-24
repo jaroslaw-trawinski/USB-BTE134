@@ -15,6 +15,7 @@
 using CommonServiceLocator;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
+using USB_BTE.App.Handlers;
 
 namespace USB_BTE.App.ViewModel
 {
@@ -44,6 +45,7 @@ namespace USB_BTE.App.ViewModel
 
             SimpleIoc.Default.Register<MainViewModel>();
             SimpleIoc.Default.Register<TrayViewModel>();
+            SimpleIoc.Default.Register<IStateHandler>(()=> new StateHandler());
         }
 
         public MainViewModel Main => ServiceLocator.Current.GetInstance<MainViewModel>();

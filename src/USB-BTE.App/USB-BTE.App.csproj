@@ -73,11 +73,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="EventArgs\MenuItemClickEventArgs.cs" />
+    <Compile Include="Handlers\IStateHandler.cs" />
+    <Compile Include="Handlers\StateHandler.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Settings.cs" />
     <Compile Include="ViewModel\TrayMenuItemViewModel.cs" />
     <Compile Include="ViewModel\TrayViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
@@ -135,5 +138,6 @@
       <Name>USB-BTE.Wrapper</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

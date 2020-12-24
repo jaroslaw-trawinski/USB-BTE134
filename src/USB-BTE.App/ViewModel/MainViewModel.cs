@@ -4,6 +4,7 @@ using System.Windows;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Ioc;
 using USB.BTE.Wrapper;
+using USB_BTE.App.Handlers;
 using USB_BTE.App.Properties;
 
 namespace USB_BTE.App.ViewModel
@@ -13,20 +14,20 @@ namespace USB_BTE.App.ViewModel
         private bool _initialized;
         private int _deviceHandle;
 
-        private Icon Icon => Enabled ? Resources.ball_green : Resources.ball_grey;
+        private Icon Icon => AreRaleysOpen ? Resources.ball_green : Resources.ball_grey;
 
         private readonly TrayViewModel _trayViewModel;
+        private readonly IStateHandler _stateHandler;
 
         private WindowState _curWindowState;
 
-
-        private bool _enabled;
-        private bool Enabled
+        private bool _areRaleysOpen;
+        private bool AreRaleysOpen
         {
-            get => _enabled;
+            get => _areRaleysOpen;
             set
             {
-                _enabled = value;
+                _areRaleysOpen = value;
                 RaisePropertyChanged();
             }
         }
@@ -63,13 +64,14 @@ namespace USB_BTE.App.ViewModel
         ///     Initializes a new instance of the MainViewModel class.
         /// </summary>
         [PreferredConstructor]
-        public MainViewModel(TrayViewModel trayViewModel)
+        public MainViewModel(TrayViewModel trayViewModel, IStateHandler stateHandler)
         {
             this.PropertyChanged += MainViewModel_PropertyChanged;
             _curWindowState = WindowState.Minimized;
             _visibility = Visibility.Hidden;
 
             _trayViewModel = trayViewModel;
+            _stateHandler = stateHandler;
             _trayViewModel.SetMenuItems(new List<TrayMenuItemViewModel>()
             {
                 new TrayMenuItemViewModel
@@ -90,7 +92,7 @@ namespace USB_BTE.App.ViewModel
 
         private void MainViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(Enabled))
+            if (e.PropertyName == nameof(AreRaleysOpen))
                 _trayViewModel.SetIcon(Icon);
         }
 
@@ -106,10 +108,14 @@ namespace USB_BTE.App.ViewModel
                 if (deviceInfo != null)
                 {
                     _deviceHandle = RelayDeviceWrapper.OpenDevice(deviceInfo.SerialNumber);
-                    if (RelayDeviceWrapper.OpenAllRelays(_deviceHandle))
+                    var raleysWereOpened = _stateHandler.GetState();
+                    if (raleysWereOpened)
                     {
-                        Enabled = true;
-                        return;
+                        if (RelayDeviceWrapper.OpenAllRelays(_deviceHandle))
+                        {
+                            AreRaleysOpen = true;
+                            return;
+                        }
                     }
                 }
                 else
@@ -117,7 +123,7 @@ namespace USB_BTE.App.ViewModel
                     _initialized = false;
                 }
             }
-            Enabled = false;
+            AreRaleysOpen = false;
         }
 
         private void _trayViewModel_OnMenuItemClick(object sender, EventArgs.MenuItemClickEventArgs e)
@@ -150,13 +156,16 @@ namespace USB_BTE.App.ViewModel
         {
             if (_initialized)
             {
-                if (Enabled)
+                if (AreRaleysOpen)
+                {
                     RelayDeviceWrapper.CloseAllRelays(_deviceHandle);
+                }
                 else
                 {
                     RelayDeviceWrapper.OpenAllRelays(_deviceHandle);
                 }
-                Enabled = !Enabled;
+                AreRaleysOpen = !AreRaleysOpen;
+                _stateHandler.SetState(AreRaleysOpen);
             }
         }
     }
